@@ -59,18 +59,31 @@
 
 ## 快速开始
 
+> ⚠️ **国内网络必读**：`huggingface.co` 与 `github.com` 直连不通，本文档所有下载步骤都已改用国内镜像。
+
 ### 1. 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 安装本地模型（可选，用于默认模式）
+### 2. 准备向量模型（手动下载，绕过 HF 下载器）
+
+HF 官方下载器在镜像环境下会写出 0 字节空文件，因此**用 curl 逐个文件拉取**：
 
 ```bash
-# 安装 Ollama: https://ollama.com/download
-ollama pull qwen2.5:1.5b
+mkdir -p models/minilm && cd models/minilm
+BASE="https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main"
+for f in config.json config_sentence_transformers.json modules.json \
+         sentence_bert_config.json tokenizer.json tokenizer_config.json \
+         special_tokens_map.json model.safetensors; do
+  curl -L -C - -o "$f" "$BASE/$f"
+done
+mkdir -p 1_Pooling
+curl -L -o 1_Pooling/config.json "$BASE/1_Pooling/config.json"
 ```
+
+> 合计约 460MB（其中 `model.safetensors` 449MB）。程序会**自动优先从本地 `models/minilm/` 加载**。
 
 ### 3. 建索引（把评论向量化入库）
 
@@ -78,13 +91,37 @@ ollama pull qwen2.5:1.5b
 python src/build_index.py
 ```
 
+> ⚠️ **ChromaDB 中文路径限制**：ChromaDB 1.x 的 Rust 内核**无法在含中文的路径下写入 HNSW 索引**。
+> 本项目已自动处理——若项目路径含中文，向量库会写到 `~/.scenic_rag/chroma_db`（可用环境变量 `CHROMA_DIR` 覆盖）。
+
 ### 4. 命令行问答
 
 ```bash
 python src/rag.py "武汉哪个公园适合带孩子"
+python src/rag.py "黄鹤楼值不值得去" -v        # -v 显示检索详情
+python src/rag.py "有什么适合亲子的" -c 杭州   # -c 指定城市
 ```
 
-### 5. 网页界面
+### 5. 大模型后端（可选）
+
+**默认离线模式（MockLLM）**：不依赖任何模型服务，把检索到的评论原文整理输出。
+用于验证检索效果、跑通链路。
+
+**接入真模型（二选一）**：
+
+```bash
+# 方案 A：本地 Ollama（零成本，集显可跑）
+ollama pull qwen2.5:1.5b
+# 默认即为 ollama 后端，无需配置
+
+# 方案 B：云端 API（效果最好）
+set LLM_PROVIDER=cloud
+set DEEPSEEK_API_KEY=你的key
+```
+
+后端按 `ollama → cloud → mock` 顺序自动选择，**任一不可用会自动回退**，不会报错中断。
+
+### 6. 网页界面
 
 ```bash
 streamlit run app.py
@@ -126,13 +163,24 @@ scenic-rag/
 
 ---
 
+## 功能
+
+- 🔍 **语义检索**：基于向量相似度找相关评论，而非关键词匹配
+- 🏙️ **城市过滤**：问"武汉…"只检索武汉的评论（从问题自动识别，也可手动指定）
+- 📎 **答案可溯源**：每条回答都附带检索到的原始评论出处
+- 🔌 **可插拔模型层**：本地 Ollama / 云端 API / 离线 Mock 三种后端，自动回退
+- 🖥️ **网页界面**：Streamlit，支持城市选择、示例问题、来源展开
+
 ## 局限性（诚实说明）
 
 1. **评论文本长度上限 500 字**：超长评论被截断，可能丢失后半段信息。
 2. **本地 1.5B 模型能力有限**：默认模式的答案质量不如云端大模型，这是"能在集显笔记本上跑"的代价。
-3. **检索基于语义相似度**：对"多少钱"这类需要精确数字的问题，可能不如关键词检索准。
-4. **评论总量 6316 条**，规模有限，覆盖的长尾问题不多。
-5. **未做检索效果定量评估**（仅定性测试），后续可补召回率指标。
+3. **离线（Mock）模式不生成**：它只整理检索到的原文，不做归纳润色 —— 仅用于验证检索环节。
+4. **检索基于语义相似度**：对"多少钱"这类需要精确数字的问题，可能不如关键词检索准。
+5. **源数据仍有残留归属错误**：一号作品的地标映射表只覆盖了 40+ 个知名地标，
+   像「滕王阁」（南昌）、「平江石牛寨」（岳阳）这类未覆盖的景点仍被标错城市。
+   这是检索结果里出现"答非所问"评论的一个来源。
+6. **未做检索效果定量评估**（仅定性测试），后续可补召回率指标。
 
 ---
 

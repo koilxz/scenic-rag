@@ -7,8 +7,15 @@ venv/
 env/
 
 # 向量库（体积大，可由 build_index.py 重建）
+# 注意：若项目路径含中文，向量库会默认写到 ~/.scenic_rag/chroma_db
 chroma_db/
 *.sqlite3
+
+# 本地模型文件（449MB，不提交；见 README「模型下载」）
+models/
+
+# 实验/探测目录
+_probe_*/
 
 # 环境变量（含 API Key，绝不提交）
 .env
