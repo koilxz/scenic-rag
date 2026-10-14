@@ -140,10 +140,19 @@ with st.sidebar:
 
     st.divider()
 
+    # ⚠️ 之前这里写死了一份城市列表，和 rag.py 里的列表、README 里的列表三处各写一遍。
+    #    现在改为从向量库动态取（Retriever.cities()），真实数据变了界面自动跟着变。
+    try:
+        city_options = rag.retriever.cities()
+    except Exception:
+        city_options = []
+    if not city_options:
+        city_options = ["北京", "上海", "武汉", "成都", "西安",
+                        "重庆", "青岛", "杭州", "济南", "南京"]
+
     city = st.selectbox(
         "限定城市",
-        ["自动识别", "北京", "上海", "武汉", "成都", "西安",
-         "重庆", "青岛", "杭州", "济南", "南京"],
+        ["自动识别"] + city_options,
         help="选择城市后只在该城市的评论中检索",
     )
     top_k = st.slider("检索评论条数", 3, 10, 5,
