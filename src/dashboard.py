@@ -210,9 +210,26 @@ def fig_cc_dist(df):
 
 
 def fig_quality(bad):
-    """数据质量图 —— 可疑跨城市景点。"""
+    """数据质量图 —— 跨城市污染自检结果。
+
+    ⚠️ 无论是否检出污染，都输出 07_quality_suspects.png：
+    无污染时画一张"通过"的结论图，这样 README 的展示与代码行为始终一致，
+    也不会再遗留旧语料时代的过时图片。
+    """
     if bad.empty:
-        print("  · 未发现跨城市污染")
+        fig, ax = plt.subplots(figsize=(9, 4.2))
+        ax.axis("off")
+        ax.text(0.5, 0.66, "✅ 未发现跨城市污染", ha="center", va="center",
+                fontsize=25, fontweight="bold", color=GREEN,
+                transform=ax.transAxes)
+        ax.text(0.5, 0.34,
+                "对全部景点按 sight_id 做跨城市归并校验：\n"
+                "未检出「同一景点被归入多个城市」的情况。",
+                ha="center", va="center", fontsize=12.5, color="#444444",
+                linespacing=1.8, transform=ax.transAxes)
+        plt.savefig(f"{OUT}/07_quality_suspects.png")
+        plt.close()
+        print("  ✓ 07_quality_suspects.png（未发现污染）")
         return
     bad = bad.sort_values("评论数", ascending=True)
     labels = [f"{r.景点名}\n（标为{r.标注城市} · 疑属{r.疑似归属}）"

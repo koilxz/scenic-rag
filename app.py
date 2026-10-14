@@ -99,16 +99,37 @@ def load_rag():
     return RagPipeline()
 
 
+@st.cache_data(show_spinner=False)
+def corpus_stats():
+    """从语料文件实时统计（避免在界面上硬编码数字，防止与数据脱节）"""
+    import json
+    p = Path(__file__).parent / "data" / "comments.jsonl"
+    n, spots, cities = 0, set(), set()
+    if p.exists():
+        with p.open(encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                d = json.loads(line)
+                n += 1
+                spots.add(d.get("spot", ""))
+                cities.add(d.get("city", ""))
+    return n, len(spots), len(cities)
+
+
+N_COMMENTS, N_SPOTS, N_CITIES = corpus_stats()
+
 # ============ 顶部 ============
-st.markdown("""
+st.markdown(f"""
 <div class="hero">
   <h1>🏞️ 景点评论问答</h1>
-  <p>基于 <b>6316 条</b>真实游客评论的检索增强问答 —— 答案全部来自真实评论，并标注出处。</p>
+  <p>基于 <b>{N_COMMENTS:,} 条</b>真实游客评论的检索增强问答 —— 答案全部来自真实评论，并标注出处。</p>
   <div class="tags">
     <span class="tag">RAG 检索增强</span>
     <span class="tag">ChromaDB 向量库</span>
-    <span class="tag">6,316 条真实语料</span>
-    <span class="tag">10 个城市</span>
+    <span class="tag">{N_COMMENTS:,} 条真实语料</span>
+    <span class="tag">{N_SPOTS} 个景点 · {N_CITIES} 个城市</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
