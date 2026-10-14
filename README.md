@@ -229,7 +229,8 @@ scenic-rag/
 ├── results/
 │   ├── dashboard/            # 语料看板图表
 │   ├── eval/                 # 检索效果对比图
-│   └── demo/                 # 演示图
+│   ├── demo/                 # 演示图
+│   └── retrieval_dashboard.html  # ⭐ 交互版看板（单文件·离线可看·含 47 条查询明细）
 └── app.py                    # Streamlit 界面
 ```
 
@@ -359,6 +360,9 @@ python eval/run_eval.py       # 输出 eval/results.md + results/eval/retrieval_
 真值全部写在 `eval/queries.jsonl` 里，**规则可复现**，不是手写几个好例子。
 
 ![检索效果对比](results/eval/retrieval_metrics.png)
+
+> 📊 **可交互版本**：[`results/retrieval_dashboard.html`](results/retrieval_dashboard.html)
+> —— 单文件、**零依赖、离线可看**；可切换指标、按档筛选、搜索全部 47 条查询明细。
 
 | 系统 | Hit@1 | Hit@3 | Hit@5 | Recall@5 | MRR |
 |---|---|---|---|---|---|
