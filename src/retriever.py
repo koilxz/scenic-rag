@@ -15,6 +15,9 @@ from config import CHROMA_DIR, COLLECTION, EMBED_MODEL, TOP_K
 
 
 class Retriever:
+    #: 分数含义（不同检索器分数不可比，展示时要如实标注，不能一律叫"相似度"）
+    score_label = "相似度"
+
     def __init__(self, embed_model: str = EMBED_MODEL):
         self.model = SentenceTransformer(embed_model)
         client = chromadb.PersistentClient(path=str(CHROMA_DIR))

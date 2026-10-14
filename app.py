@@ -9,6 +9,16 @@ from pathlib import Path
 
 import streamlit as st
 
+# 让界面能读到 src/config.py 里的检索后端配置（避免在界面里重复写一遍）
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+from config import RETRIEVER as _RETRIEVER                      # noqa: E402
+
+RETRIEVER_TAG = {
+    "hybrid": "混合检索 BM25+向量",
+    "vector": "ChromaDB 向量库",
+    "bm25": "BM25 关键词检索",
+}.get(_RETRIEVER, _RETRIEVER)
+
 st.set_page_config(
     page_title="景点评论问答 · RAG",
     page_icon="🏞️",
@@ -127,7 +137,7 @@ st.markdown(f"""
   <p>基于 <b>{N_COMMENTS:,} 条</b>真实游客评论的检索增强问答 —— 答案全部来自真实评论，并标注出处。</p>
   <div class="tags">
     <span class="tag">RAG 检索增强</span>
-    <span class="tag">ChromaDB 向量库</span>
+    <span class="tag">{RETRIEVER_TAG}</span>
     <span class="tag">{N_COMMENTS:,} 条真实语料</span>
     <span class="tag">{N_SPOTS} 个景点 · {N_CITIES} 个城市</span>
   </div>
@@ -158,6 +168,9 @@ with st.sidebar:
     st.markdown(f'<span class="badge {bcls}">{bname}</span>', unsafe_allow_html=True)
     if rag.llm.name == "mock":
         st.caption("检索正常工作；接入 Ollama 或云端 API 后，回答将由大模型归纳生成。")
+
+    st.markdown("**检索方式**")
+    st.caption(rag.retriever_info)
 
     st.divider()
 
@@ -243,7 +256,7 @@ if "last" in st.session_state:
               <span class="src-spot">{i}. {h['spot']}</span>
               <span class="src-city">{h['city']}</span>
             </div>
-            <div class="src-score">相似度 {h['score']:.3f}</div>
+            <div class="src-score">{rag.score_label} {h['score']:.3f}</div>
           </div>
           <div class="src-text">{h['text']}</div>
         </div>

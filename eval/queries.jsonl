@@ -1,0 +1,50 @@
+{"id": "T1-01", "tier": "T1", "question": "武汉黄鹤楼值得去吗", "city": "武汉", "spots": ["黄鹤楼"]}
+{"id": "T1-02", "tier": "T1", "question": "成都大熊猫繁育研究基地怎么样", "city": "成都", "spots": ["成都大熊猫繁育研究基地"]}
+{"id": "T1-03", "tier": "T1", "question": "西安兵马俑值得去吗", "city": "西安", "spots": ["秦始皇帝陵博物院(兵马俑)"]}
+{"id": "T1-04", "tier": "T1", "question": "上海迪士尼好玩吗", "city": "上海", "spots": ["上海迪士尼度假区充满欢乐童真的梦幻乐园"]}
+{"id": "T1-05", "tier": "T1", "question": "杭州灵隐寺怎么样", "city": "杭州", "spots": ["灵隐寺活佛济公的出家地"]}
+{"id": "T1-06", "tier": "T1", "question": "重庆长江索道体验如何", "city": "重庆", "spots": ["长江索道"]}
+{"id": "T1-07", "tier": "T1", "question": "北京慕田峪长城怎么样", "city": "北京", "spots": ["慕田峪长城"]}
+{"id": "T1-08", "tier": "T1", "question": "青岛啤酒博物馆值得去吗", "city": "青岛", "spots": ["青岛啤酒博物馆"]}
+{"id": "T1-09", "tier": "T1", "question": "济南趵突泉好玩吗", "city": "济南", "spots": ["趵突泉景区"]}
+{"id": "T1-10", "tier": "T1", "question": "成都杜甫草堂怎么样", "city": "成都", "spots": ["杜甫草堂"]}
+{"id": "T1-11", "tier": "T1", "question": "西安陕西历史博物馆怎么预约", "city": "西安", "spots": ["陕西历史博物馆"]}
+{"id": "T1-12", "tier": "T1", "question": "上海东方明珠值得上去吗", "city": "上海", "spots": ["东方明珠"]}
+
+{"id": "T2-01", "tier": "T2", "question": "武汉有什么适合带孩子玩的地方", "city": "武汉", "keywords": ["孩子", "小孩", "娃", "亲子"], "min_hits": 3}
+{"id": "T2-02", "tier": "T2", "question": "成都有什么适合带娃去的地方", "city": "成都", "keywords": ["孩子", "小孩", "娃", "亲子"], "min_hits": 5}
+{"id": "T2-03", "tier": "T2", "question": "上海哪里适合亲子游", "city": "上海", "keywords": ["孩子", "小孩", "娃", "亲子"], "min_hits": 5}
+{"id": "T2-04", "tier": "T2", "question": "重庆有哪些适合小朋友的乐园", "city": "重庆", "keywords": ["孩子", "小孩", "娃", "亲子"], "min_hits": 5}
+{"id": "T2-05", "tier": "T2", "question": "西安有哪些值得看的实景演出", "city": "西安", "keywords": ["演出", "表演", "秀"], "min_hits": 8}
+{"id": "T2-06", "tier": "T2", "question": "杭州有哪些值得看的演出", "city": "杭州", "keywords": ["演出", "表演", "秀"], "min_hits": 8}
+{"id": "T2-07", "tier": "T2", "question": "杭州哪里能玩刺激的漂流", "city": "杭州", "keywords": ["漂流", "激流"], "min_hits": 5}
+{"id": "T2-08", "tier": "T2", "question": "武汉哪里能玩刺激的水上项目", "city": "武汉", "keywords": ["漂流", "水", "刺激"], "min_hits": 4}
+{"id": "T2-09", "tier": "T2", "question": "武汉哪里能看夜景", "city": "武汉", "keywords": ["夜游", "夜景", "灯光"], "min_hits": 4}
+{"id": "T2-10", "tier": "T2", "question": "杭州晚上有什么可以逛的", "city": "杭州", "keywords": ["夜游", "夜景", "晚上"], "min_hits": 5}
+{"id": "T2-11", "tier": "T2", "question": "武汉有哪些能看海洋动物的场馆", "city": "武汉", "keywords": ["海洋", "水族", "海豚", "白鲸", "企鹅"], "min_hits": 4}
+{"id": "T2-12", "tier": "T2", "question": "青岛有哪些能看海洋动物的场馆", "city": "青岛", "keywords": ["海洋", "水族", "海豚", "白鲸", "企鹅"], "min_hits": 4}
+{"id": "T2-13", "tier": "T2", "question": "成都哪里能看到大熊猫", "city": "成都", "keywords": ["熊猫", "国宝"], "min_hits": 6}
+{"id": "T2-14", "tier": "T2", "question": "西安哪里能了解古代历史", "city": "西安", "keywords": ["历史", "文物", "博物馆"], "min_hits": 10}
+{"id": "T2-15", "tier": "T2", "question": "武汉哪个景点排队最严重", "city": "武汉", "keywords": ["排队", "人多", "拥挤"], "min_hits": 3}
+{"id": "T2-16", "tier": "T2", "question": "上海哪个景点人多要排队", "city": "上海", "keywords": ["排队", "人多", "拥挤"], "min_hits": 4}
+{"id": "T2-17", "tier": "T2", "question": "重庆哪个景点性价比高值得去", "city": "重庆", "keywords": ["性价比", "划算", "便宜", "不值", "太贵"], "min_hits": 4}
+{"id": "T2-18", "tier": "T2", "question": "重庆哪里能泡温泉", "city": "重庆", "keywords": ["温泉"], "min_hits": 3}
+{"id": "T2-19", "tier": "T2", "question": "北京有哪些长城可以爬", "city": "北京", "keywords": ["长城"], "min_hits": 3}
+{"id": "T2-20", "tier": "T2", "question": "武汉哪些景点需要坐索道或观光车", "city": "武汉", "keywords": ["索道", "缆车", "观光车"], "min_hits": 3}
+
+{"id": "T3-01", "tier": "T3", "question": "哪些景点能看到熊猫", "city": null, "keywords": ["熊猫", "国宝"], "min_hits": 6}
+{"id": "T3-02", "tier": "T3", "question": "哪些景点可以泡温泉", "city": null, "keywords": ["温泉"], "min_hits": 2}
+{"id": "T3-03", "tier": "T3", "question": "哪些景点有大型实景演出", "city": null, "keywords": ["演出", "表演"], "min_hits": 8}
+{"id": "T3-04", "tier": "T3", "question": "哪些动物园值得去", "city": null, "keywords": ["动物园"], "min_hits": 5}
+{"id": "T3-05", "tier": "T3", "question": "哪些景点有刺激的漂流项目", "city": null, "keywords": ["漂流"], "min_hits": 3}
+{"id": "T3-06", "tier": "T3", "question": "哪些景点需要坐索道", "city": null, "keywords": ["索道", "缆车"], "min_hits": 2}
+{"id": "T3-07", "tier": "T3", "question": "哪些景点人特别多要排队", "city": null, "keywords": ["排队", "人多"], "min_hits": 5}
+{"id": "T3-08", "tier": "T3", "question": "哪些景点能看到海洋生物", "city": null, "keywords": ["海洋", "海豚", "白鲸", "企鹅"], "min_hits": 5}
+{"id": "T3-09", "tier": "T3", "question": "哪些景点适合看夜景", "city": null, "keywords": ["夜游", "夜景"], "min_hits": 3}
+{"id": "T3-10", "tier": "T3", "question": "哪些景点被吐槽门票太贵", "city": null, "keywords": ["太贵", "不值", "性价比"], "min_hits": 4}
+
+{"id": "T4-01", "tier": "T4", "question": "夏天好热，想找个能纳凉的地方", "city": null, "spots": ["木兰清凉寨"], "note": "语料里说「避暑/凉快/清凉」，「纳凉」出现 0 次"}
+{"id": "T4-02", "tier": "T4", "question": "哪里能看到保存完好的老建筑", "city": null, "spots": ["西安城墙", "华清宫"], "note": "「老建筑」出现 0 次，语料里说「城墙/古建筑」"}
+{"id": "T4-03", "tier": "T4", "question": "哪里能看到珍贵的古董字画", "city": null, "spots": ["陕西历史博物馆", "湖北省博物馆看镇馆之宝感受古楚文化", "上海笔墨博物馆观赏中国毛笔和墨及文房四宝"], "note": "「古董」「字画」均出现 0 次，语料里说「文物/镇馆之宝/笔墨」"}
+{"id": "T4-04", "tier": "T4", "question": "有什么地方能一眼看遍全城", "city": null, "spots": ["千佛山", "东方明珠"], "note": "语料里说「俯瞰/全景」，「一眼看遍」不出现"}
+{"id": "T4-05", "tier": "T4", "question": "想带家里的小孩出去玩玩", "city": null, "spots": ["乐和乐都动物主题乐园", "成都欢乐谷", "成都动物园看看金丝猴馆和熊猫馆"], "note": "口语「出去玩玩」对齐语料里「带孩子」的表述"}

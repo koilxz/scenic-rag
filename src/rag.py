@@ -10,23 +10,65 @@ RAG 主链路
 import argparse
 import sys
 
-from retriever import Retriever
 from llm import get_llm
-from config import TOP_K
+from config import TOP_K, RETRIEVER, KNOWN_CITIES
+
+
+def get_retriever():
+    """按 config.RETRIEVER 选择检索后端。
+
+    hybrid（默认）：BM25 + 向量，RRF 融合 —— 评测里表现最好（见 eval/results.md）
+    vector        ：纯向量检索（src/retriever.py）
+    bm25          ：纯关键词检索（src/bm25.py）
+    """
+    if RETRIEVER == "vector":
+        from retriever import Retriever
+        return Retriever()
+    if RETRIEVER == "bm25":
+        import json
+        from bm25 import BM25
+        from config import DATA_FILE
+
+        class _Bm25Only:
+            score_label = "BM25 分"
+
+            def __init__(self):
+                docs = []
+                with open(DATA_FILE, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            docs.append(json.loads(line))
+                self._bm = BM25(docs)
+                self._docs = docs
+
+            def search(self, q, top_k=TOP_K, city=None):
+                return self._bm.search(q, top_k=top_k, city=city)
+
+            def cities(self):
+                return sorted({d["city"] for d in self._docs if d.get("city")})
+
+        return _Bm25Only()
+
+    from hybrid import HybridRetriever
+    return HybridRetriever()
 
 SYSTEM_PROMPT = """你是一名旅游顾问。你的回答必须**严格基于**下面提供的游客评论。
 
 规则：
 1. 只根据提供的评论内容回答，不要添加评论里没有的信息。
-2. 如果评论中没有相关信息，直接说"这些评论中没有提到相关信息"。
-3. 回答要具体：提到能支撑结论的关键评论内容。
-4. 最后单独用一行列出你参考了哪些景点。
-5. 用简洁的中文回答，不要编造数字或事实。"""
+2. 判断「值不值得去 / 好不好玩」这类问题时：只要评论里包含游客的实际体验或态度
+   （好评、差评、吐槽、推荐都算），就据此给出结论，**不要因为评论里没出现「值得」
+   这两个字就回答"没有相关信息"**。
+3. 只有当评论与问题**确实无关**时，才回答"这些评论中没有提到相关信息"。
+4. 回答要具体：提到能支撑结论的关键评论内容。
+5. 最后单独用一行列出你参考了哪些景点。
+6. 用简洁的中文回答，不要编造数字或事实。"""
 
 # 库里出现的城市名。
 # ⚠️ 曾经这里写死了一份列表，app.py 又写了一份，容易与实际数据不同步。
-#    现在改为「优先从向量库动态读取」，读取失败才回退到这份兜底名单。
-_FALLBACK_CITIES = ["北京", "上海", "武汉", "成都", "西安", "重庆", "青岛", "杭州", "济南", "南京"]
+#    现在改为「优先从向量库动态读取」，读取失败才回退到 config 里的兜底名单。
+_FALLBACK_CITIES = list(KNOWN_CITIES)
 
 _KNOWN_CITIES_CACHE = None
 
@@ -82,8 +124,24 @@ def build_prompt(question: str, hits: list) -> str:
 
 class RagPipeline:
     def __init__(self):
-        self.retriever = Retriever()
+        self.retriever = get_retriever()
         self.llm = get_llm()
+
+    @property
+    def retriever_info(self):
+        """当前检索后端的中文描述（供界面展示）。"""
+        if hasattr(self.retriever, "info"):
+            return self.retriever.info()
+        return "向量检索（ChromaDB + MiniLM）"
+
+    @property
+    def score_label(self):
+        """分数含义：向量检索是「相似度」，混合检索是「融合分」。
+
+        ⚠️ 两者量纲不同、都不可跨查询比较，展示时必须如实标注，
+           不能一律写成"相似度"（曾犯过这个错）。
+        """
+        return getattr(self.retriever, "score_label", "相关度")
 
     def ask(self, question: str, top_k: int = TOP_K, city: str = None, verbose: bool = False):
         """
@@ -107,7 +165,8 @@ class RagPipeline:
         if verbose:
             print("=" * 60)
             print(f"检索范围：{city if city else '全库（10城）'}")
-            print("检索到的评论：")
+            print(f"检索方式：{self.retriever_info}")
+            print(f"检索到的评论（分数 = {self.score_label}，不可跨查询比较）：")
             for i, h in enumerate(hits, 1):
                 print(f"  {i}. [{h['score']}] [{h['city']}] {h['spot']}: {h['text'][:50]}...")
             print("=" * 60)
@@ -127,6 +186,7 @@ def main():
     print("正在初始化 RAG 系统……")
     rag = RagPipeline()
     print(f"使用模型后端：{rag.llm.name}")
+    print(f"检索方式：{rag.retriever_info}")
 
     if args.question:
         answer, hits = rag.ask(args.question, args.top_k, args.city, args.verbose)
@@ -134,7 +194,7 @@ def main():
         print(answer)
         print("\n【参考来源】")
         for h in hits:
-            print(f"  · {h['city']} - {h['spot']}（相似度 {h['score']}）")
+            print(f"  · {h['city']} - {h['spot']}（{rag.score_label} {h['score']}）")
     else:
         # 交互模式
         print("进入交互模式（输入 q 退出）\n")

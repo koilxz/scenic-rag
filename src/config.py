@@ -55,6 +55,21 @@ COLLECTION = "scenic_comments"
 # ---------- 检索 ----------
 TOP_K = 5            # 检索返回的评论条数
 
+# 检索后端：hybrid（默认，向量+关键词融合）/ vector（纯向量）/ bm25（纯关键词）
+RETRIEVER = os.getenv("RETRIEVER", "hybrid")
+
+# ---------- 混合检索 ----------
+RRF_K = 60           # RRF 融合常数（原论文默认 60，对排名靠前的文档区分更细）
+HYBRID_POOL = 30     # 每一路先各召回多少条，再融合重排
+
+NAME_BOOST = float(os.getenv("NAME_BOOST", "1.0"))   # 点名景点时的加分（RRF 分数量级约 0.03）
+NAME_MATCH_MIN = int(os.getenv("NAME_MATCH_MIN", "3"))  # 公共子串达到几个字算「点名了该景点」
+MAX_PER_SPOT = int(os.getenv("MAX_PER_SPOT", "1"))   # 非点名景点在 top-k 里最多占几条
+
+# 语料里出现的城市（用于把「匹配到城市名」排除出「点名景点」）
+KNOWN_CITIES = ["北京", "上海", "武汉", "成都", "西安",
+                "重庆", "青岛", "杭州", "济南", "南京"]
+
 # ---------- LLM ----------
 # 通过环境变量 LLM_PROVIDER 切换：ollama（默认）/ cloud
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")

@@ -2,13 +2,13 @@
 生成「RAG 问答界面」效果图
 ==========================
 说明（重要）：
-    · 图里的**问题、检索到的评论、城市、景点名、相似度分数**全部是
+    · 图里的**问题、检索到的评论、城市、景点名、分数**全部是
       在**真实语料 data/comments.jsonl** 上用**真实检索器**跑出来的结果。
-      优先使用线上同款 **向量检索**（src/retriever.py，ChromaDB + MiniLM）；
-      若该环境未安装向量依赖，则回退到 demo/demo_search.py 的 BM25 词频检索，
+      优先使用线上同款 **混合检索**（src/hybrid.py：BM25 + 向量 RRF 融合）；
+      若该环境未安装向量依赖，则回退到 BM25 词频检索（src/bm25.py），
       并在图下方的说明里如实标注用的是哪一种。
-    · 「回答」那段文字是**从检索结果里现算的摘要**（不是手写文案）。
-    · 只有**界面外观**（边框、阴影、圆角）是脚本渲染的，用于在没有
+    · 「回答」那段文字由**本地大模型真实生成**（Ollama），不是手写文案；
+      只有**界面外观**（边框、阴影、圆角）是脚本渲染的，用于在没有
       浏览器/Streamlit 的环境下展示 UI 长什么样。
 
 用法：
@@ -93,7 +93,8 @@ def rounded(draw, box, r, fill, outline=None, width=1):
     draw.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=width)
 
 
-def render(question, city_filter, hits, answer, note=None, answer_label="回答"):
+def render(question, city_filter, hits, answer, note=None, answer_label="回答",
+           score_label="相似度"):
     global W
     S = SCALE
     PAD = 34 * S
@@ -176,7 +177,7 @@ def render(question, city_filter, hits, answer, note=None, answer_label="回答"
     d.text((tx, ty + 44 * S), f"基于 {N_DOCS:,} 条真实景点评论的检索增强问答系统",
            font=f_hero_p, fill="#e8fffb")
     # tags（只写真实用到的技术，不写没用的）
-    tags = ["ChromaDB 向量库", "MiniLM 向量模型", "Streamlit 界面", "Ollama / DeepSeek"]
+    tags = ["混合检索 BM25+向量", "ChromaDB 向量库", "Streamlit 界面", "Ollama / DeepSeek"]
     tgx = tx
     tgy = ty + 82 * S
     for t in tags:
@@ -235,8 +236,8 @@ def render(question, city_filter, hits, answer, note=None, answer_label="回答"
                     sx + spot_w + 10 * S + cw, sy + 24 * S), 6 * S, C_TAGBG)
         d.text((sx + spot_w + 19 * S, sy + 5 * S), ctxt, font=f_city, fill=C_TAGTX)
 
-        # 相似度（右对齐）
-        score_txt = f"相似度 {h['score']:.3f}"
+        # 分数（右对齐）—— 如实标注分数含义，不能一律写"相似度"
+        score_txt = f"{score_label} {h['score']:.3f}"
         sw = d.textlength(score_txt, font=f_score)
         d.text((sbox[2] - 18 * S - sw, sy + 4 * S), score_txt, font=f_score, fill=C_MUTED)
 
@@ -285,15 +286,15 @@ def load_docs():
 
 
 def search(question, city, top_k):
-    """优先用线上同款【向量检索】；不可用时回退 BM25。返回 (hits, engine)"""
+    """优先用线上同款【混合检索】；不可用时回退 BM25。返回 (hits, engine)"""
     try:
-        from retriever import Retriever          # noqa: WPS433
-        r = Retriever()
-        return r.search(question, top_k=top_k, city=city), "vector"
-    except Exception as e:                        # noqa: BLE001
-        print(f"  ⚠️ 向量检索不可用（{type(e).__name__}），回退 BM25")
-        from demo_search import BM25, load        # noqa: WPS433
-        bm = BM25(load())
+        from hybrid import HybridRetriever          # noqa: WPS433
+        r = HybridRetriever()
+        return r.search(question, top_k=top_k, city=city), "hybrid"
+    except Exception as e:                          # noqa: BLE001
+        print(f"  ⚠️ 混合检索不可用（{type(e).__name__}），回退 BM25")
+        from bm25 import BM25                       # noqa: WPS433
+        bm = BM25(load_docs())
         return bm.search(question, top_k=top_k, city=city), "bm25"
 
 
@@ -323,7 +324,7 @@ if __name__ == "__main__":
     city = "成都"
 
     # ① 走真实 RAG 链路（检索 + 大模型生成）；不可用时退回抽取式摘要
-    answer, answer_label, eng_txt = None, None, None
+    answer, answer_label, eng_txt, score_label = None, None, None, "相似度"
     try:
         from rag import RagPipeline, build_prompt, SYSTEM_PROMPT  # noqa: WPS433
         rag = RagPipeline()
@@ -334,26 +335,28 @@ if __name__ == "__main__":
         ])
         model = getattr(rag.llm, "model", rag.llm.__class__.__name__)
         answer_label = f"回答 · {rag.llm.__class__.__name__}（{model}）生成"
-        eng_txt = "线上同款向量检索 src/retriever.py（ChromaDB + MiniLM，余弦相似度）"
+        score_label = rag.score_label
+        eng_txt = f"线上同款检索链路（{rag.retriever_info}）"
     except Exception as e:                            # noqa: BLE001
         print(f"  ⚠️ 大模型链路不可用（{type(e).__name__}），改用检索结果摘要")
         hits, eng = search(question, city, top_k=5)
         answer = build_answer(question, hits, eng)
         answer_label = "回答 · 离线模式（检索结果原文）"
-        eng_txt = ("线上同款向量检索 src/retriever.py（ChromaDB + MiniLM，余弦相似度）"
-                   if eng == "vector" else
-                   "BM25 词频检索 demo/demo_search.py（未装向量依赖时的回退）")
+        score_label = "融合分" if eng == "hybrid" else "BM25 分"
+        eng_txt = ("线上同款混合检索 src/hybrid.py（BM25 + 向量，RRF 融合）" if eng == "hybrid" else
+                   "BM25 词频检索 src/bm25.py（未装向量依赖时的回退）")
 
     # Pillow 不渲染 markdown，把星号标记去掉，避免画出 "**文字**"
     if answer:
         answer = answer.replace("**", "")
 
-    note = (f"说明：图中的问题、检索评论、城市、景点名、相似度分数，均为脚本在真实语料 "
+    note = (f"说明：图中的问题、检索评论、城市、景点名、{score_label}，均为脚本在真实语料 "
             f"{DATA.name}（{N_DOCS:,} 条）上用「{eng_txt}」跑出的真实结果；"
             f"回答由本地大模型生成，仅界面外观为脚本渲染。"
             f"线上正式系统为 Streamlit 页面（app.py）。")
 
-    img = render(question, city, hits, answer, note=note, answer_label=answer_label)
+    img = render(question, city, hits, answer, note=note, answer_label=answer_label,
+                 score_label=score_label)
     img.save(OUT, quality=95)
     print(f"✅ 已生成：{OUT}")
     print(f"   语料：{N_DOCS:,} 条 | 尺寸：{img.width} × {img.height}")
