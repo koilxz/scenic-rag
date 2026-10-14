@@ -1,7 +1,16 @@
 # 景点评论 RAG 问答系统
 
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-0.1+-1C3C3C?logo=langchain&logoColor=white)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-向量库-FF6B6B)
+![Streamlit](https://img.shields.io/badge/Streamlit-Web%20UI-FF4B4B?logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 > 用 **6316 条真实景点评论**搭建的检索增强生成（RAG）问答系统。
 > 问它"武汉哪个公园适合带孩子""黄鹤楼值不值得去"，它会**基于真实游客评论**回答，并给出原文出处。
+
+**技术栈**：Python · LangChain · ChromaDB · sentence-transformers · Streamlit · Ollama / DeepSeek
+**核心能力**：语义检索 + 城市限定过滤 + 出处可溯 + 数据质量自检
 
 ---
 
