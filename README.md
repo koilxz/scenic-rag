@@ -228,6 +228,46 @@ $ python src/rag.py "武汉哪个公园适合带孩子"
 > 滕王阁在南昌，这是**源数据城市标注错误 + LLM 盲信检索结果**共同导致的幻觉，
 > 同时也是本项目最值得讲的一个坑，详见「局限性」第 5 条。
 
+---
+
+## 📊 语料可视化（了解"知识库"长什么样）
+
+跑一条命令即可生成全部图表：
+
+```bash
+python src/dashboard.py        # 输出到 results/dashboard/
+```
+
+### 语料分布
+
+| 城市评论量 Top | 景点评论数 Top15 |
+|---|---|
+| ![城市评论量](results/dashboard/01_city_comments.png) | ![景点评论量](results/dashboard/05_top_spots.png) |
+
+### 情感与长度分布
+
+| 评论情感分布 | 评论长度分布 |
+|---|---|
+| ![情感分布](results/dashboard/03_sentiment.png) | ![长度分布](results/dashboard/04_length_hist.png) |
+
+<details>
+<summary>📂 展开其余 3 张</summary>
+
+| 城市覆盖 vs 评论量 | 每景点评论数分布 |
+|---|---|
+| ![覆盖](results/dashboard/02_city_spot_vs_comments.png) | ![分布](results/dashboard/06_comment_count_dist.png) |
+
+### ⭐ 数据质量自检（这张最有价值）
+
+![数据质量](results/dashboard/07_quality_suspects.png)
+
+> 这不是普通的统计图 —— `dashboard.py` 内置了一道**跨城市污染检测**规则：
+> 自动找出「**景点名里含其他城市名**」的记录。
+> 首跑即抓出 **16 个可疑景点 / 330 条评论**（如"上海迪士尼度假区"被标成杭州、
+> "重庆欢乐谷"被标成成都），详见「局限性」第 5 条。
+
+</details>
+
 ## 局限性（诚实说明）
 
 1. **评论文本长度上限 500 字**：超长评论被截断，可能丢失后半段信息。
