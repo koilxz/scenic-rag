@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>刘希泽 · 作品集 | RAG 检索评测 · 数据分析</title>
+<meta name="description" content="数据科学与大数据技术 · RAG 检索系统与量化评测 · 城市景点数据分析。GitHub: koilxz">
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
+    --line:#e2e8f0; --bg:#f6f8fb; --card:#ffffff;
+    --blue:#2f5597; --blue-l:#60a5fa; --blue-p:#dbe7f6;
+    --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    line-height:1.7;font-size:15px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 22px}
+  a{color:var(--blue);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header.hero{background:linear-gradient(135deg,#1e3a6e 0%,#2f5597 55%,#3b6bb5 100%);color:#fff;padding:52px 0 44px}
+  .eyebrow{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:#b9cdf0;font-weight:600;margin-bottom:14px}
+  h1{font-size:32px;margin:0 0 12px;font-weight:800;letter-spacing:-.3px}
+  h1 .hl{background:rgba(255,255,255,.16);padding:2px 9px;border-radius:6px;box-shadow:inset 0 -2px 0 rgba(255,255,255,.35)}
+  .sub{font-size:15.5px;color:#dbe6f9;margin:0 0 8px;max-width:740px}
+  .meta{font-size:13.5px;color:#b9cdf0;margin:0}
+  .meta a{color:#e3ecff}
+  .links{margin-top:22px;display:flex;gap:11px;flex-wrap:wrap}
+  .links a{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);
+    color:#fff;padding:8px 15px;border-radius:9px;font-size:13.5px;font-weight:600}
+  .links a:hover{background:rgba(255,255,255,.24);text-decoration:none}
+  main{padding:30px 0 10px}
+  section{margin-bottom:34px}
+  .sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 4px}
+  .sec-h h2{font-size:19px;margin:0;font-weight:780;letter-spacing:-.2px}
+  .sec-h .n{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;
+    background:var(--blue-p);color:var(--blue);border-radius:6px;font-size:12.5px;font-weight:800;flex:none}
+  .sec-d{color:var(--ink2);font-size:13.5px;margin:0 0 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+    margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,52,.04)}
+  .card h3{font-size:16.5px;margin:0 0 4px;font-weight:740;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;padding:2px 8px;border-radius:5px;
+    background:#e0e7ff;color:#3730a3}
+  .tag.g{background:#dcfce7;color:#166534}
+  .tag.a{background:#fef3c7;color:#b45309}
+  .card p.d{color:var(--ink2);font-size:13.5px;margin:6px 0 0}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 4px}
+  .kpi{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:13px 14px}
+  .kpi .v{font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--blue);line-height:1.25}
+  .kpi .k{font-size:12px;color:var(--ink2);margin-top:3px}
+  ul.tight{margin:12px 0 0;padding-left:21px;font-size:13.8px;color:var(--ink2)}
+  ul.tight li{margin-bottom:7px}
+  ul.tight b{color:var(--ink)}
+  .stack{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+  .stack span{background:#f1f5f9;border:1px solid var(--line);color:var(--ink2);padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600}
+  .note{color:var(--ink2);font-size:13px;margin:14px 0 0;padding-top:13px;border-top:1px dashed var(--line)}
+  .note b{color:var(--ink)}
+  .linkrow{margin-top:14px;display:flex;gap:14px;flex-wrap:wrap}
+  .linkrow a{font-size:13.5px;font-weight:650}
+  footer{border-top:1px solid var(--line);background:#fff;padding:22px 0 40px;color:var(--ink3);font-size:12.8px}
+  footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}h1{font-size:24px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Portfolio · 数据科学与大数据技术</div>
+    <h1>刘希泽 · <span class="hl">把「感觉不错」变成可复现的数字</span></h1>
+    <p class="sub">
+      三峡大学 · 人工智能与计算机学院 · 数据科学与大数据技术。<br>
+      关注 <b>检索增强生成（RAG）</b> 与 <b>量化评测</b> —— 不靠"效果挺好的"这种话交付，
+      而是给出 Hit@k / Recall@k / MRR，并说明它反查出了哪些真实 bug。
+    </p>
+    <p class="meta">
+      <a href="https://github.com/koilxz">github.com/koilxz</a> ·
+      <a href="https://github.com/koilxz/scenic-rag">scenic-rag</a> ·
+      <a href="https://github.com/koilxz/city-attraction-analysis">city-attraction-analysis</a>
+    </p>
+    <div class="links">
+      <a href="retrieval_dashboard.html">📊 检索效果看板（可交互）</a>
+      <a href="https://github.com/koilxz/scenic-rag">⭐ scenic-rag 源码</a>
+      <a href="https://blog.csdn.net/2401_86734821/article/details/168111892">📝 技术复盘文章</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-h"><span class="n">1</span><h2>核心项目 · 景点评论 RAG 问答系统</h2></div>
+    <p class="sec-d">
+      用 <b>1749 条真实游客评论</b>（151 个景点 · 10 城市）搭建的检索增强生成问答系统。
+      问它"带孩子去成都玩，推荐去哪"，它基于真实评论作答并给出原文出处。
+    </p>
+
+    <div class="card">
+      <h3>量化评测结果 <span class="tag g">47 条查询 · 4 档难度 · 4 种方案</span></h3>
+      <p class="d">指标为<b>景点级</b>命中。混合检索为线上实际使用的链路。</p>
+      <div class="kpis">
+        <div class="kpi"><div class="v">93.6%</div><div class="k">混合检索 Hit@5</div></div>
+        <div class="kpi"><div class="v">74.1%</div><div class="k">混合检索 Recall@5</div></div>
+        <div class="kpi"><div class="v">+10.6pt</div><div class="k">相对关键词基线</div></div>
+        <div class="kpi"><div class="v">0% → 80%</div><div class="k">语义改写档 Hit@5</div></div>
+      </div>
+      <ul class="tight">
+        <li><b>混合检索</b>（BM25 + 向量 + 景点名精确匹配 → RRF 融合 → 多样性重排）在 Hit@1/3/5、Recall@5 四项全面优于任一单路。</li>
+        <li><b>语义改写档是硬证据</b>：先用脚本确认「纳凉」「老建筑」「古董」在语料中出现 <b>0 次</b>，再拿这些词提问 —— 关键词检索 Hit@5 = <b>0%</b>，混合检索 <b>80%</b>。</li>
+        <li><b>纯向量反而不如关键词基线</b>（Hit@5 76.6% vs 83.0%）—— MiniLM 仅约 1.18 亿参数，中文细粒度区分度有限。这是选型事实，不是调参能绕过的。</li>
+        <li><b>评测反查出两个真 bug</b>：问"西安兵马俑值得去吗"，纯关键词检索 Top-10 全是"跟团游记"（标题有"兵马俑"三个字，而兵马俑自己的评论反而不含）⇒ 加景点名精确匹配后 T1 档 Hit@1 由 83.3% → <b>100%</b>。</li>
+      </ul>
+      <div class="stack">
+        <span>Python</span><span>sentence-transformers (MiniLM)</span><span>ChromaDB</span>
+        <span>BM25 自实现</span><span>RRF 融合</span><span>Streamlit</span><span>Ollama / DeepSeek</span>
+      </div>
+      <div class="linkrow">
+        <a href="retrieval_dashboard.html">→ 打开可交互看板（47 条查询明细、指标切换）</a>
+        <a href="https://github.com/koilxz/scenic-rag">→ 源码与复现步骤</a>
+      </div>
+      <p class="note">
+        <b>不藏短板</b>：MRR 略低于 BM25（0.693 vs 0.699）、评测集仅 47 条、真值是规则标注、参数存在过拟合风险 ——
+        全部写在项目的"局限性"章节里。另有<b>两轮数据清洗</b>的完整记录：上游城市标注错误导致"滕王阁被算作武汉景点"的幻觉，
+        修复路径是<b>人工逐条核验 279 个景点归属</b>（499 → 151），而不是调 prompt 或换 embedding 模型。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="n">2</span><h2>数据链路 · 城市景点数据分析</h2></div>
+    <p class="sec-d">上一个项目的数据来源，与 RAG 项目构成「<b>采集 → 清洗 → 分析 → 问答</b>」的完整链路。</p>
+    <div class="card">
+      <h3>去哪儿网景点评论采集与分析 <span class="tag">数据源头</span></h3>
+      <ul class="tight">
+        <li>采集 10 个热门城市的景点评论，清洗后剩 <b>1749 条</b> / 82 个有评论景点。</li>
+        <li>内置<b>数据质量自检</b>：自动检测"景点名里含其他城市名"的跨城市污染记录，曾抓出 <b>16 个可疑景点 / 330 条评论</b>。</li>
+        <li>第二轮发现更隐蔽的<b>系统性误标</b>（列表页"周边推荐"把邻市乃至全国景点带进来并打本地标签）—— 常规规则全部漏检，最终逐条人工核验。</li>
+      </ul>
+      <div class="stack"><span>Python</span><span>pandas</span><span>matplotlib</span><span>数据清洗</span><span>质量自检</span></div>
+      <div class="linkrow"><a href="https://github.com/koilxz/city-attraction-analysis">→ 查看源码</a></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="n">3</span><h2>其他</h2></div>
+    <div class="card">
+      <h3>城市数据看板 <span class="tag a">HTML</span></h3>
+      <p class="d">景点分布、情感分布、评论长度分布等可视化，单文件静态页面，可直接打开。</p>
+      <div class="linkrow"><a href="https://github.com/koilxz/ecommerce-dashboard">→ 查看仓库</a></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-h"><span class="n">4</span><h2>技术栈</h2></div>
+    <div class="card">
+      <div class="stack">
+        <span>Python</span><span>FastAPI</span><span>Streamlit</span><span>ChromaDB</span>
+        <span>sentence-transformers</span><span>BM25 / RRF</span><span>pandas</span>
+        <span>Docker</span><span>Nginx</span><span>Git</span><span>Linux / 轻量云运维</span>
+      </div>
+      <p class="note">
+        <b>为什么偏爱评测：</b>每个项目都自带可一键复跑的评测脚本与真值文件（规则标注，非手写几个好例子），
+        指标表和局限性一起写进 README —— 这是我希望延续的工作方式。
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>刘希泽 · 三峡大学 数据科学与大数据技术 · 2028 届</div>
+    <div>github.com/koilxz</div>
+  </div>
+</footer>
+
+</body>
+</html>

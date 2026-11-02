@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>景点评论 RAG · 检索效果看板</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
+    --line:#e2e8f0; --bg:#f6f8fb; --card:#ffffff;
+    --blue:#2f5597; --blue-l:#60a5fa; --blue-p:#dbe7f6;
+    --grey:#94a3b8; --grey-l:#cbd5e1;
+    --green:#16a34a; --red:#dc2626; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    line-height:1.65; font-size:15px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 22px}
+  a{color:var(--blue); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---------- hero ---------- */
+  .hero{
+    background:linear-gradient(135deg,#1e3a6e 0%,#2f5597 55%,#3b6bb5 100%);
+    color:#fff; padding:46px 0 40px;
+  }
+  .hero .eyebrow{
+    font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:#b9cdf0; font-weight:600; margin-bottom:14px;
+  }
+  .hero h1{font-size:30px; line-height:1.32; margin:0 0 12px; font-weight:800; letter-spacing:-.2px}
+  .hero h1 .hl{
+    background:rgba(255,255,255,.16); padding:1px 8px; border-radius:6px;
+    box-shadow:inset 0 -2px 0 rgba(255,255,255,.35);
+  }
+  .hero .sub{font-size:15px; color:#dbe6f9; margin:0 0 26px; max-width:760px}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+  .kpi{
+    background:rgba(255,255,255,.11); border:1px solid rgba(255,255,255,.18);
+    border-radius:12px; padding:14px 15px;
+  }
+  .kpi .v{font-size:26px; font-weight:800; letter-spacing:-.5px; line-height:1.15}
+  .kpi .k{font-size:12.5px; color:#c3d4f2; margin-top:3px}
+  .kpi.big{background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.4)}
+
+  /* ---------- cards ---------- */
+  main{padding:30px 0 10px}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:24px 26px; margin-bottom:22px; box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  .card h2{font-size:17px; margin:0 0 4px; font-weight:750; letter-spacing:-.1px}
+  .card h2 .n{
+    display:inline-block; width:22px; height:22px; line-height:22px; text-align:center;
+    background:var(--blue-p); color:var(--blue); border-radius:6px; font-size:12.5px;
+    margin-right:9px; font-weight:800; vertical-align:1px;
+  }
+  .card .desc{color:var(--ink2); font-size:13.5px; margin:0 0 18px}
+  .note{color:var(--ink2); font-size:13px; margin:16px 0 0; padding-top:14px; border-top:1px dashed var(--line)}
+  .note b{color:var(--ink)}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px}
+  .tab{
+    border:1px solid var(--line); background:#fff; color:var(--ink2);
+    padding:6px 13px; border-radius:99px; font-size:13px; cursor:pointer;
+    font-family:inherit; transition:.15s;
+  }
+  .tab:hover{border-color:var(--blue-l); color:var(--blue)}
+  .tab.on{background:var(--blue); border-color:var(--blue); color:#fff; font-weight:600}
+
+  /* ---------- horizontal bars ---------- */
+  .hbars{display:flex; flex-direction:column; gap:11px}
+  .hb{display:grid; grid-template-columns:168px 1fr 62px; align-items:center; gap:12px}
+  .hb .lb{font-size:13px; color:var(--ink2); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .hb .track{height:22px; background:#f1f5f9; border-radius:6px; overflow:hidden; position:relative}
+  .hb .fill{height:100%; border-radius:6px; transition:width .5s cubic-bezier(.3,.9,.3,1); min-width:2px}
+  .hb .val{font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; text-align:right}
+  .hb.hi .lb{color:var(--blue); font-weight:700}
+  .hb.hi .val{color:var(--blue)}
+
+  .tierblock{margin-bottom:20px}
+  .tierblock .th{
+    font-size:13px; font-weight:700; color:var(--ink);
+    margin:0 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .tierblock .th .dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+  .tierblock .th .sub2{font-weight:400; color:var(--ink3); font-size:12.5px}
+  .tierblock .hb{grid-template-columns:150px 1fr 56px}
+  .tierblock .hb .track{height:18px}
+
+  /* ---------- case ---------- */
+  .case-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px}
+  .case-box{border:1px solid var(--line); border-radius:11px; padding:16px 17px}
+  .case-box.bad{background:#fef2f2; border-color:#fecaca}
+  .case-box.good{background:#f0fdf4; border-color:#bbf7d0}
+  .case-box .tag{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase}
+  .case-box.bad .tag{color:var(--red)}
+  .case-box.good .tag{color:var(--green)}
+  .case-box .q{font-weight:700; margin:6px 0 10px; font-size:14.5px}
+  .case-box ol{margin:0; padding-left:20px; font-size:13px; color:var(--ink2)}
+  .case-box li{margin-bottom:5px}
+  .case-box .res{margin-top:10px; font-size:13.5px; font-weight:700}
+  .case-box.bad .res{color:var(--red)}
+  .case-box.good .res{color:var(--green)}
+
+  /* ---------- pipeline ---------- */
+  .flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; margin-top:4px}
+  .flow .col{display:flex; flex-direction:column; gap:8px; flex:1 1 0; min-width:170px}
+  .sig{
+    border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:12.5px;
+    background:#fbfdff; color:var(--ink2);
+  }
+  .sig b{color:var(--ink); display:block; font-size:13px; margin-bottom:1px}
+  .arrow{display:flex; align-items:center; justify-content:center; padding:0 12px; color:var(--blue-l); font-size:20px; font-weight:700}
+  .step{
+    border:1.5px solid var(--blue-l); background:var(--blue-p); border-radius:9px;
+    padding:10px 13px; font-size:12.5px; color:#1e3a6e; display:flex; flex-direction:column; justify-content:center;
+  }
+  .step b{font-size:13.5px; color:var(--blue); display:block; margin-bottom:2px}
+
+  /* ---------- table ---------- */
+  .tools{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:14px}
+  .tools input{
+    flex:1 1 220px; padding:8px 12px; border:1px solid var(--line); border-radius:8px;
+    font-size:13.5px; font-family:inherit; color:var(--ink); outline:none;
+  }
+  .tools input:focus{border-color:var(--blue-l); box-shadow:0 0 0 3px rgba(96,165,250,.16)}
+  .tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:11px}
+  table{border-collapse:collapse; width:100%; font-size:13px}
+  th,td{padding:8px 11px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap}
+  th{background:#f8fafc; font-weight:700; color:var(--ink2); font-size:12px; position:sticky; top:0}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#f8fbff}
+  td.q{white-space:normal; min-width:210px; max-width:330px}
+  .chip{
+    display:inline-block; padding:1px 7px; border-radius:5px; font-size:11.5px; font-weight:700;
+  }
+  .chip.t1{background:#e0e7ff; color:#3730a3}
+  .chip.t2{background:#dbeafe; color:#1d4ed8}
+  .chip.t3{background:#fae8ff; color:#a21caf}
+  .chip.t4{background:#fef3c7; color:#b45309}
+  .hit,.miss{font-weight:800; font-size:13px}
+  .hit{color:var(--green)}
+  .miss{color:#cbd5e1}
+  .num{font-variant-numeric:tabular-nums}
+  .spot{color:var(--ink3); font-size:12px}
+
+  footer{padding:8px 0 46px; color:var(--ink3); font-size:12.5px}
+  footer .wrap{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap}
+
+  @media (max-width:760px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .hero h1{font-size:23px}
+    .case-grid{grid-template-columns:1fr}
+    .hb{grid-template-columns:96px 1fr 54px}
+    .tierblock .hb{grid-template-columns:96px 1fr 50px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">景点评论 RAG 问答系统 · 检索效果评估</div>
+    <h1>一次评测，<span class="hl">把向量检索换成了混合检索</span></h1>
+    <p class="sub">
+      自建 47 条分档查询，横向对比 4 种检索方案。评测不仅给出了数字，
+      还反查出两个真实 bug —— 这正是它最大的价值。
+    </p>
+    <div class="kpis">
+      <div class="kpi big"><div class="v">93.6%</div><div class="k">混合检索 Hit@5</div></div>
+      <div class="kpi"><div class="v">74.1%</div><div class="k">混合检索 Recall@5</div></div>
+      <div class="kpi"><div class="v">+10.6<span style="font-size:15px">pt</span></div><div class="k">相对关键词基线提升</div></div>
+      <div class="kpi"><div class="v">47<span style="font-size:15px"> 条</span></div><div class="k">分档查询 · 四档</div></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="card">
+    <h2><span class="n">1</span>四种方案 · 总体对比</h2>
+    <p class="desc">语料 <b>1749</b> 条真实评论 / <b>82</b> 个景点 / <b>10</b> 个城市；指标为<b>景点级</b>命中（检索到的评论是否来自 gold 景点）。点击切换指标。</p>
+    <div class="tabs" id="tabsAll"></div>
+    <div class="hbars" id="chartAll"></div>
+    <p class="note">
+      <b>混合检索</b>在 Hit@1 / Hit@3 / Hit@5 / Recall@5 四项上全面提升；
+      唯一低于 BM25 的是 MRR（0.693 vs 0.699）—— 因为多样性重排会把"点名景点"之外的相关景点也排进来，
+      <b>这个不占优的数字同样如实列出</b>。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">2</span>分档表现（Hit@5）</h2>
+    <p class="desc">查询按难度分四档，越往后越难。最关键的对比在 <b>T4 语义改写</b>档。</p>
+    <div id="chartTier"></div>
+    <p class="note">
+      <b>T4（语义改写）</b>是特意造的：先用脚本确认「纳凉」「老建筑」「古董」「字画」在语料里出现 <b>0 次</b>，
+      再拿这些词提问。结果 —— <b>关键词检索 Hit@5 = 0%</b>，混合检索 <b>80%</b>。
+      这是"必须上语义检索"最硬的证据。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">3</span>评测反查出的真实 bug</h2>
+    <p class="desc">评测不只是打分，它暴露了检索链路里两个靠"看代码"发现不了的问题。</p>
+    <div class="case-grid">
+      <div class="case-box bad">
+        <div class="tag">修复前 · 纯关键词检索</div>
+        <div class="q">「西安兵马俑值得去吗」</div>
+        <ol>
+          <li>兵马俑 + 华清宫一日游（跟团游记）</li>
+          <li>兵马俑 + 华清宫一日游（跟团游记）</li>
+          <li>……前 10 条全是"跟团游记"</li>
+        </ol>
+        <div class="res">Top-10 命中率：0%</div>
+      </div>
+      <div class="case-box good">
+        <div class="tag">修复后 · 混合检索 + 景点名精确匹配</div>
+        <div class="q">「西安兵马俑值得去吗」</div>
+        <ol>
+          <li>秦始皇帝陵博物院(兵马俑)</li>
+          <li>秦始皇帝陵博物院(兵马俑)</li>
+          <li>秦始皇帝陵博物院(兵马俑)</li>
+        </ol>
+        <div class="res">Top-1 命中，T1 档 Hit@1：83.3% → 100%</div>
+      </div>
+    </div>
+    <p class="note">
+      <b>根因</b>：那些"跟团游记"标题里写了"兵马俑"，而 <b>兵马俑自己的评论反而不含这三个字</b>（游客写的是"太壮观了""人好多"）。
+      解决办法是用<b>最长公共子串 ≥ 3 字</b>判断"用户点名了哪个景点"，命中后把该景点的评论直接提进候选池。
+      第二个 bug 是<b>同一景点多条评论挤满 top-k</b>，靠<b>按景点多样性重排</b>解决。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">4</span>混合检索是怎么组成的</h2>
+    <p class="desc">三路信号并行召回，用 RRF 融合排名，再按景点去重重排。</p>
+    <div class="flow">
+      <div class="col">
+        <div class="sig"><b>BM25 关键词</b>字符 n-gram 召回，抓精确词面</div>
+        <div class="sig"><b>向量语义</b>MiniLM 句向量，抓换说法</div>
+        <div class="sig"><b>景点名精确匹配</b>最长公共子串 ≥ 3 字，抓"点名"</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step"><b>RRF 融合</b>得分 = Σ 1/(60 + rank)<br>只用排名，不用分数 —— 省掉余弦相似度与 BM25 分的量纲对齐</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>景点去重重排</b>同景点最多 1 条；<br>被点名的景点不受限</div>
+      <div class="arrow">→</div>
+      <div class="step"><b>Top-K 输出</b>连同出处一起喂给大模型</div>
+    </div>
+    <p class="note">
+      为什么用 <b>RRF 而不是加权求和</b>：加权求和要先把两类分数归一化，多一层出错空间；
+      RRF 只用"排第几"，天然免疫量纲差异。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">5</span>47 条查询明细（线上链路：混合检索）</h2>
+    <p class="desc">点击分档筛选，或用搜索框查关键词。✓ = 命中了 gold 景点。</p>
+    <div class="tools">
+      <input id="search" type="search" placeholder="搜索查询，例如：温泉 / 熊猫 / 索道 …">
+      <div class="tabs" id="tabsQ" style="margin:0"></div>
+    </div>
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr>
+            <th>查询</th><th>档</th><th>城市</th><th>gold 数</th>
+            <th>Hit@1</th><th>Hit@3</th><th>Hit@5</th><th>MRR</th><th>Top-3 检索到的景点</th>
+          </tr>
+        </thead>
+        <tbody id="qbody"></tbody>
+      </table>
+    </div>
+    <p class="note" id="qcount"></p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>数据来源：<b>eval/queries.jsonl</b>（规则标注，可复现）+ <b>eval/run_eval.py</b>（一键重跑）</div>
+    <div>github.com/koilxz/scenic-rag</div>
+  </div>
+</footer>
+
+<script>
+/* ================= 数据（源自 eval/results.md，可一键复现） ================= */
+const SYSTEMS = [
+  {id:'bm25',  name:'BM25 关键词基线',  color:'#94a3b8', hi:false},
+  {id:'vec',   name:'纯向量检索',        color:'#60a5fa', hi:false},
+  {id:'vecnc', name:'向量·不过滤城市',   color:'#cbd5e1', hi:false},
+  {id:'hybrid',name:'混合检索（线上）',  color:'#2f5597', hi:true },
+];
+const METRICS = ['Hit@1','Hit@3','Hit@5','Recall@5','MRR'];
+const DATA = {
+  ALL:{bm25:[59.6,80.9,83.0,65.9,0.699], vec:[51.1,72.3,76.6,57.3,0.627], vecnc:[38.3,68.1,72.3,52.9,0.527], hybrid:[55.3,83.0,93.6,74.1,0.693]},
+  T1: {bm25:[83.3,91.7,91.7,91.7,0.861], vec:[58.3,75.0,83.3,83.3,0.683], vecnc:[41.7,75.0,75.0,75.0,0.556], hybrid:[100.0,100.0,100.0,100.0,1.000]},
+  T2: {bm25:[70.0,90.0,95.0,77.2,0.804], vec:[60.0,70.0,75.0,54.1,0.683], vecnc:[40.0,60.0,70.0,48.9,0.524], hybrid:[40.0,85.0,95.0,77.0,0.612]},
+  T3: {bm25:[40.0,90.0,90.0,45.2,0.628], vec:[40.0,80.0,80.0,46.0,0.567], vecnc:[40.0,80.0,80.0,46.0,0.567], hybrid:[50.0,90.0,90.0,52.6,0.667]},
+  T4: {bm25:[0.0,0.0,0.0,0.0,0.033],     vec:[20.0,60.0,60.0,30.0,0.392], vecnc:[20.0,60.0,60.0,30.0,0.392], hybrid:[20.0,20.0,80.0,43.3,0.330]},
+};
+const TIERS = ['ALL','T1','T2','T3','T4'];
+const TIER_META = {
+  ALL:{label:'总体', sub:'47 条查询'},
+  T1:{label:'T1 精确提及', sub:'12 条 · 例如「武汉黄鹤楼值得去吗」'},
+  T2:{label:'T2 城市+主题', sub:'20 条 · 例如「杭州哪里能玩刺激的漂流」'},
+  T3:{label:'T3 跨城主题', sub:'10 条 · 例如「哪些景点可以泡温泉」'},
+  T4:{label:'T4 语义改写', sub:'5 条 · 例如「夏天好热，想找个能纳凉的地方」'},
+};
+
+/* 47 条查询明细：[查询, 城市, 档, gold数, Hit@1, Hit@3, Hit@5, MRR, Top-3] */
+const QUERIES = [
+["武汉黄鹤楼值得去吗","武汉","T1",1,1,1,1,1.00,"黄鹤楼 / 黄鹤楼 / 黄鹤楼"],
+["成都大熊猫繁育研究基地怎么样","成都","T1",1,1,1,1,1.00,"成都大熊猫繁育研究基地 ×3"],
+["西安兵马俑值得去吗","西安","T1",1,1,1,1,1.00,"秦始皇帝陵博物院(兵马俑) ×3"],
+["上海迪士尼好玩吗","上海","T1",1,1,1,1,1.00,"上海迪士尼度假区充满欢乐童真的梦幻乐园 ×3"],
+["杭州灵隐寺怎么样","杭州","T1",1,1,1,1,1.00,"灵隐寺活佛济公的出家地 ×3"],
+["重庆长江索道体验如何","重庆","T1",1,1,1,1,1.00,"长江索道 ×3"],
+["北京慕田峪长城怎么样","北京","T1",1,1,1,1,1.00,"慕田峪长城 ×3"],
+["青岛啤酒博物馆值得去吗","青岛","T1",1,1,1,1,1.00,"青岛啤酒博物馆 ×3"],
+["济南趵突泉好玩吗","济南","T1",1,1,1,1,1.00,"趵突泉景区 ×3"],
+["成都杜甫草堂怎么样","成都","T1",1,1,1,1,1.00,"杜甫草堂 ×3"],
+["西安陕西历史博物馆怎么预约","西安","T1",1,1,1,1,1.00,"陕西历史博物馆 ×3"],
+["上海东方明珠值得上去吗","上海","T1",1,1,1,1,1.00,"东方明珠 ×3"],
+["武汉有什么适合带孩子玩的地方","武汉","T2",5,0,1,1,0.33,"黄鹤楼 / 知音号乘船游览欣赏精彩演艺 / 武汉玛雅海滩水公园"],
+["成都有什么适合带娃去的地方","成都","T2",4,0,1,1,0.33,"熊猫谷看参加野化训练的熊猫宝宝 / 成都天台山旅游景区 / 武侯祠"],
+["上海哪里适合亲子游","上海","T2",2,0,1,1,0.50,"东方明珠 / 上海动物园 / 豫园"],
+["重庆有哪些适合小朋友的乐园","重庆","T2",1,0,1,1,0.33,"重庆动物园 / 长江索道 / 乐和乐都动物主题乐园"],
+["西安有哪些值得看的实景演出","西安","T2",1,0,0,0,0.00,"《驼铃传奇》秀演绎传奇驼道的实景演出 ×3"],
+["杭州有哪些值得看的演出","杭州","T2",1,0,1,1,0.50,"灵隐寺活佛济公的出家地 / 杭州宋城 / 杭州野生动物世界"],
+["杭州哪里能玩刺激的漂流","杭州","T2",1,0,0,1,0.20,"灵隐寺活佛济公的出家地 / 京杭大运河杭州景区 / 杭州宋城"],
+["武汉哪里能玩刺激的水上项目","武汉","T2",3,1,1,1,1.00,"武汉玛雅海滩水公园 / 武汉欢乐谷 / 海合安武汉极地海洋公园"],
+["武汉哪里能看夜景","武汉","T2",1,0,1,1,0.50,"知音号乘船游览欣赏精彩演艺 / 武汉两江游览·夜游长江 / 武汉玛雅海滩水公园"],
+["杭州晚上有什么可以逛的","杭州","T2",1,1,1,1,1.00,"京杭大运河杭州景区 / 灵隐寺活佛济公的出家地 / 杭州宋城"],
+["武汉有哪些能看海洋动物的场馆","武汉","T2",1,1,1,1,1.00,"海合安武汉极地海洋公园 / 武汉玛雅海滩水公园 / 武汉两江游览"],
+["青岛有哪些能看海洋动物的场馆","青岛","T2",1,1,1,1,1.00,"海合安青岛极地海洋公园 / 青岛海底世界 / 崂山巨峰游览区"],
+["成都哪里能看到大熊猫","成都","T2",4,1,1,1,1.00,"成都大熊猫繁育研究基地 ×3"],
+["西安哪里能了解古代历史","西安","T2",4,1,1,1,1.00,"华清宫 / 陕西历史博物馆 / 蓝田水陆庵壁塑博物馆"],
+["武汉哪个景点排队最严重","武汉","T2",3,1,1,1,1.00,"武汉两江游览·夜游长江 / 武汉玛雅海滩水公园 / 木兰云雾山"],
+["上海哪个景点人多要排队","上海","T2",2,0,1,1,0.50,"豫园 / 东方明珠 / 上海动物园"],
+["重庆哪个景点性价比高值得去","重庆","T2",2,0,1,1,0.50,"重庆动物园 / 长江索道 / 武隆天生三桥"],
+["重庆哪里能泡温泉","重庆","T2",1,0,1,1,0.33,"长江索道 / 重庆动物园 / 天赐华汤森林温泉(重庆璧山店)"],
+["北京有哪些长城可以爬","北京","T2",2,1,1,1,1.00,"慕田峪长城 / 八达岭长城 / 景山公园"],
+["武汉哪些景点需要坐索道或观光车","武汉","T2",1,0,0,1,0.20,"武汉玛雅海滩水公园 / 海合安武汉极地海洋公园 / 武汉两江游览"],
+["哪些景点能看到熊猫","—","T3",5,1,1,1,1.00,"熊猫谷看参加野化训练的熊猫宝宝 / 成都大熊猫繁育研究基地 / 上海动物园"],
+["哪些景点可以泡温泉","—","T3",2,1,1,1,1.00,"天赐华汤森林温泉(重庆璧山店) / 华昌龙之谷乐园 / 青岛啤酒博物馆"],
+["哪些景点有大型实景演出","—","T3",3,0,0,0,0.00,"《驼铃传奇》秀演绎传奇驼道的实景演出 ×3"],
+["哪些动物园值得去","—","T3",6,1,1,1,1.00,"上海动物园 / 济南动物园风光优美的城市动物园 / 成都动物园"],
+["哪些景点有刺激的漂流项目","—","T3",3,0,1,1,0.50,"武汉玛雅海滩水公园 / OMG心跳乐园地下河溶洞科考探秘 / 武隆天生三桥"],
+["哪些景点需要坐索道","—","T3",4,1,1,1,1.00,"武隆天生三桥 / 长江索道 / 大足石刻"],
+["哪些景点人特别多要排队","—","T3",6,0,1,1,0.33,"武隆天生三桥 / 熊猫谷看参加野化训练的熊猫宝宝 / 北京环球度假区"],
+["哪些景点能看到海洋生物","—","T3",3,1,1,1,1.00,"海合安武汉极地海洋公园 / 海合安青岛极地海洋公园 / 上海海洋水族馆"],
+["哪些景点适合看夜景","—","T3",2,0,1,1,0.50,"清照泉城·明水古城国际泉水旅游度假区 / 武汉两江游览·夜游长江 / 牛首山文化旅游区"],
+["哪些景点被吐槽门票太贵","—","T3",8,0,1,1,0.33,"严子陵钓台景区 / 牛首山文化旅游区 / 海合安武汉极地海洋公园"],
+["夏天好热，想找个能纳凉的地方","—","T4",1,0,0,1,0.25,"武汉玛雅海滩水公园 / 成都天台山旅游景区 / 成都动物园"],
+["哪里能看到保存完好的老建筑","—","T4",2,0,0,0,0.00,"朱家峪 / 清照泉城·明水古城国际泉水旅游度假区 / 蓝田水陆庵壁塑博物馆"],
+["哪里能看到珍贵的古董字画","—","T4",3,0,0,1,0.20,"朱家峪 / 《驼铃传奇》秀演绎传奇驼道的实景演出 / 《长恨歌》演出"],
+["有什么地方能一眼看遍全城","—","T4",2,1,1,1,1.00,"千佛山 / 海合安武汉极地海洋公园 / 杭州野生动物世界"],
+["想带家里的小孩出去玩玩","—","T4",3,0,0,1,0.20,"北京环球度假区 / 济南动物园风光优美的城市动物园 / 崂山巨峰游览区"],
+];
+
+/* ================= 渲染：方案对比 ================= */
+let curMetric = 2; // 默认 Hit@5
+const tabsAll = document.getElementById('tabsAll');
+METRICS.forEach((m,i)=>{
+  const b = document.createElement('button');
+  b.className = 'tab' + (i===curMetric?' on':'');
+  b.textContent = m;
+  b.onclick = ()=>{ curMetric = i; document.querySelectorAll('#tabsAll .tab').forEach((x,j)=>x.classList.toggle('on', j===i)); drawAll(); };
+  tabsAll.appendChild(b);
+});
+function drawAll(){
+  const box = document.getElementById('chartAll');
+  const isM = METRICS[curMetric] === 'MRR';   // MRR 是 0~1 的小数，其余是百分数
+  let html = '';
+  SYSTEMS.forEach(s=>{
+    const v = DATA.ALL[s.id][curMetric];
+    const pct = isM ? v * 100 : v;                       // 统一成 0~100 用于条宽
+    const txt = isM ? v.toFixed(3) : v.toFixed(1) + '%'; // MRR 显示 3 位小数
+    html += '<div class="hb'+(s.hi?' hi':'')+'">'
+          +   '<div class="lb">'+s.name+'</div>'
+          +   '<div class="track"><div class="fill" style="width:'+pct.toFixed(1)+'%;background:'+s.color+'"></div></div>'
+          +   '<div class="val">'+txt+'</div>'
+          + '</div>';
+  });
+  box.innerHTML = html;
+}
+drawAll();
+
+/* ================= 渲染：分档 ================= */
+function drawTier(){
+  const box = document.getElementById('chartTier');
+  let html = '';
+  ['T1','T2','T3','T4'].forEach(t=>{
+    const meta = TIER_META[t];
+    html += '<div class="tierblock">'
+          + '<div class="th"><span class="dot"></span>'+meta.label
+          + '<span class="sub2">'+meta.sub+'</span></div>'
+          + '<div class="hbars">';
+    SYSTEMS.forEach(s=>{
+      const v = DATA[t][s.id][2]; // Hit@5
+      html += '<div class="hb'+(s.hi?' hi':'')+'">'
+            +   '<div class="lb">'+s.name+'</div>'
+            +   '<div class="track"><div class="fill" style="width:'+Math.max(0.6,v)+'%;background:'+s.color+'"></div></div>'
+            +   '<div class="val">'+v.toFixed(1)+'%</div>'
+            + '</div>';
+    });
+    html += '</div></div>';
+  });
+  box.innerHTML = html;
+}
+drawTier();
+
+/* ================= 渲染：查询表 ================= */
+const qbody = document.getElementById('qbody');
+const qcount = document.getElementById('qcount');
+const search = document.getElementById('search');
+let curTier = 'ALL';
+const tabsQ = document.getElementById('tabsQ');
+['ALL','T1','T2','T3','T4'].forEach(t=>{
+  const b = document.createElement('button');
+  b.className = 'tab' + (t==='ALL'?' on':'');
+  b.textContent = (t==='ALL'?'全部':'档 '+t);
+  b.onclick = ()=>{
+    curTier = t;
+    document.querySelectorAll('#tabsQ .tab').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    drawQ();
+  };
+  tabsQ.appendChild(b);
+});
+function mk(v){ return v ? '<span class="hit">✓</span>' : '<span class="miss">✗</span>'; }
+function drawQ(){
+  const kw = search.value.trim().toLowerCase();
+  let rows = QUERIES.filter(r=>{
+    if (curTier!=='ALL' && r[2]!==curTier) return false;
+    if (kw && r[0].toLowerCase().indexOf(kw)<0 && r[8].toLowerCase().indexOf(kw)<0) return false;
+    return true;
+  });
+  let html = '';
+  rows.forEach(r=>{
+    html += '<tr>'
+         +  '<td class="q">'+r[0]+'</td>'
+         +  '<td><span class="chip '+r[2].toLowerCase()+'">'+r[2]+'</span></td>'
+         +  '<td>'+(r[1]==='—'?'<span class="spot">不限</span>':r[1])+'</td>'
+         +  '<td class="num">'+r[3]+'</td>'
+         +  '<td>'+mk(r[4])+'</td><td>'+mk(r[5])+'</td><td>'+mk(r[6])+'</td>'
+         +  '<td class="num">'+r[7].toFixed(2)+'</td>'
+         +  '<td class="spot">'+r[8]+'</td>'
+         +  '</tr>';
+  });
+  qbody.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:22px">没有匹配的查询</td></tr>';
+  qcount.innerHTML = '当前显示 <b>'+rows.length+'</b> / '+QUERIES.length+' 条查询 · 真值由 <b>eval/queries.jsonl</b> 规则标注，可复现';
+}
+search.addEventListener('input', drawQ);
+drawQ();
+</script>
+</body>
+</html>
